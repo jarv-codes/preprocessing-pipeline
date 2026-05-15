@@ -89,12 +89,32 @@ EXTRACTORS = {
     '.pptm': extract_ppt_text,
 }
 
-def extract_text_from_file(filepath):
-    """파일 경로를 받아 적절한 텍스트 추출 함수를 호출"""
+def _save_text(text, output_path, source):
+    """추출 결과를 .md(기계적 구조화) 또는 .txt로 저장."""
+    if output_path.lower().endswith('.md'):
+        title = os.path.splitext(os.path.basename(source))[0]
+        body = text.replace('[Images OCR]', '## Images OCR\n')
+        content = f"# {title}\n\n{body}\n"
+    else:
+        content = text
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(content)
+
+
+def extract_text_from_file(filepath, output_path=None):
+    """파일 경로를 받아 적절한 텍스트 추출 함수를 호출.
+
+    output_path가 주어지면 결과를 해당 경로에 저장합니다.
+    확장자가 .md이면 파일명을 H1로, [Images OCR] 섹션을 H2로 감싼 마크다운으로 저장합니다.
+    """
     ext = os.path.splitext(filepath)[1].lower()
-    # 딕셔너리의 get 메서드를 사용하여 함수를 찾고, 없으면 기본 메시지 반환
     extractor_func = EXTRACTORS.get(ext)
     if extractor_func:
-        return extractor_func(filepath)
+        text = extractor_func(filepath)
     else:
-        return "Unsupported file type"
+        text = "Unsupported file type"
+
+    if output_path:
+        _save_text(text, output_path, source=filepath)
+
+    return text

@@ -8,6 +8,7 @@
 - **안정적인 에러 처리**: 파일 읽기 오류가 발생해도 프로그램이 중단되지 않습니다.
 - **고급 OCR 추출**: 스캔된 PDF나 이미지 기반 PDF의 텍스트 인식을 위해 이미지 전처리 후 Tesseract OCR을 사용합니다.
 - **DOCX 내장 이미지 OCR**: DOCX 본문 텍스트뿐 아니라 문서에 삽입된 이미지에 대해서도 OCR을 수행하여 함께 반환합니다.
+- **마크다운/텍스트 파일 저장**: 추출 함수의 `output_path` 인자로 결과를 `.md`(기계적 구조화) 또는 `.txt`로 바로 저장할 수 있습니다.
 
 ## 프로젝트 구성
 
@@ -117,3 +118,26 @@ image = Image.open('snippet.png')
 text = ocr_image(image, lang='kor', threshold=200)
 print(text)
 ```
+
+## 결과를 파일로 저장하기 (output_path)
+
+세 가지 진입 함수(`extract_text_from_file`, `extract_ocr_from_docx`, `extract_ocr_from_pdf`) 모두 `output_path` 인자를 지원합니다. 확장자에 따라 저장 형식이 달라집니다.
+
+- **`.md`** → 파일명을 H1으로, 페이지/이미지/OCR 섹션을 H2로 감싼 **기계적 구조화 마크다운**으로 저장
+- **그 외 (`.txt` 등)** → 페이지/이미지 구분선(`--- Page N ---` / `--- Image N ---`)만 포함된 평문으로 저장
+
+```python
+# 본문 + 내장 이미지 OCR을 한 번에 마크다운으로 저장
+from extract_text_from_file import extract_text_from_file
+extract_text_from_file('report.docx', output_path='report.md')
+
+# 스캔 PDF의 페이지별 OCR을 마크다운으로 저장
+from extract_ocr_from_pdf import extract_ocr_from_pdf
+extract_ocr_from_pdf('scanned.pdf', start_page=1, end_page=10, output_path='scanned.md')
+
+# DOCX 내장 이미지 OCR만 텍스트 파일로 저장
+from extract_ocr_from_docx import extract_ocr_from_docx
+extract_ocr_from_docx('report.docx', output_path='report_images.txt')
+```
+
+> 의미적 마크다운화(제목·표·목록 복원 등)는 이 단계의 범위를 벗어나므로, 위 결과물을 입력으로 받아 LLM으로 후처리하는 별도 스크립트(`format_with_llm.py` 등)에서 다룰 예정입니다.
