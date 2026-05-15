@@ -5,6 +5,8 @@ from docx import Document
 from pptx import Presentation
 import PyPDF2
 
+from extract_ocr_from_docx import extract_ocr_from_docx
+
 # 1. 에러 처리 데코레이터 정의
 def handle_extraction_errors(func):
     """텍스트 추출 함수의 예외를 처리하는 데코레이터"""
@@ -27,10 +29,14 @@ def extract_csv_text(filepath):
 
 @handle_extraction_errors
 def extract_docx_text(filepath):
-    """DOCX 파일의 텍스트를 추출"""
+    """DOCX 파일의 본문 텍스트 + 내장 이미지 OCR 결과를 함께 추출"""
     doc = Document(filepath)
-    fullText = [para.text for para in doc.paragraphs]
-    return "\n".join(fullText)
+    body = "\n".join(para.text for para in doc.paragraphs)
+
+    ocr_texts = extract_ocr_from_docx(filepath)
+    if ocr_texts:
+        body += "\n\n[Images OCR]\n" + "\n".join(ocr_texts)
+    return body
 
 @handle_extraction_errors
 def extract_ipynb_text(filepath):
