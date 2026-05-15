@@ -118,3 +118,18 @@ def extract_text_from_file(filepath, output_path=None):
         _save_text(text, output_path, source=filepath)
 
     return text
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="다양한 형식의 파일(.docx, .pdf, .pptx, .csv, .md, .ipynb 등)에서 텍스트를 추출합니다."
+    )
+    parser.add_argument("filepath", help="입력 파일 경로")
+    parser.add_argument("-o", "--output", help="결과 저장 경로 (.md 또는 .txt). 생략하면 stdout에 출력")
+    args = parser.parse_args()
+
+    result = extract_text_from_file(args.filepath, output_path=args.output)
+    if not args.output:
+        print(result)

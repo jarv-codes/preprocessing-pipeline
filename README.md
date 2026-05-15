@@ -141,3 +141,27 @@ extract_ocr_from_docx('report.docx', output_path='report_images.txt')
 ```
 
 > 의미적 마크다운화(제목·표·목록 복원 등)는 이 단계의 범위를 벗어나므로, 위 결과물을 입력으로 받아 LLM으로 후처리하는 별도 스크립트(`format_with_llm.py` 등)에서 다룰 예정입니다.
+
+## 명령줄(CLI) 사용법
+
+세 스크립트 모두 `python <스크립트>.py <파일> [-o 저장경로] ...` 형태로 직접 실행할 수 있습니다. `-o`를 생략하면 결과를 stdout에 출력합니다.
+
+```bash
+# 일반 파일 → 마크다운으로 저장
+python extract_text_from_file.py report.docx -o report.md
+
+# 일반 파일 → stdout 출력 (파이프로 이어쓰기 가능)
+python extract_text_from_file.py report.docx > report.txt
+
+# DOCX 내장 이미지 OCR → 마크다운 저장
+python extract_ocr_from_docx.py abc.docx -o def.md --lang kor
+
+# 스캔 PDF의 1~10페이지 OCR → 마크다운 저장
+python extract_ocr_from_pdf.py scan.pdf -o scan.md --start 1 --end 10 --dpi 300 --lang kor
+```
+
+각 스크립트의 전체 옵션은 `-h` / `--help`로 확인할 수 있습니다.
+
+```bash
+python extract_ocr_from_pdf.py --help
+```

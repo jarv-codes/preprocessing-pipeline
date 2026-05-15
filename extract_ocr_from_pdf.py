@@ -51,3 +51,32 @@ def extract_ocr_from_pdf(filepath, start_page=1, end_page=None, lang='kor', dpi=
     except Exception as e:
         print(f"오류가 발생했습니다: {e}")
         return None
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="이미지 기반 PDF에서 OCR로 페이지별 텍스트를 추출합니다."
+    )
+    parser.add_argument("filepath", help="PDF 파일 경로")
+    parser.add_argument("-o", "--output", help="결과 저장 경로 (.md 또는 .txt). 생략하면 stdout에 출력")
+    parser.add_argument("--start", type=int, default=1, help="시작 페이지 (기본: 1)")
+    parser.add_argument("--end", type=int, default=None, help="종료 페이지 (기본: 끝까지)")
+    parser.add_argument("--lang", default="kor", help="Tesseract 언어 (기본: kor)")
+    parser.add_argument("--dpi", type=int, default=300, help="이미지 변환 DPI (기본: 300)")
+    args = parser.parse_args()
+
+    results = extract_ocr_from_pdf(
+        args.filepath,
+        start_page=args.start,
+        end_page=args.end,
+        lang=args.lang,
+        dpi=args.dpi,
+        output_path=args.output,
+    )
+    if results and not args.output:
+        for idx, t in enumerate(results):
+            print(f"--- Page {args.start + idx} ---")
+            print(t)
+            print()

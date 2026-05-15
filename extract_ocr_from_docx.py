@@ -63,3 +63,22 @@ def extract_ocr_from_docx(filepath, lang='kor', output_path=None):
     except Exception as e:
         print(f"오류가 발생했습니다: {e}")
         return None
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="DOCX 내장 이미지에서 OCR로 텍스트를 추출합니다."
+    )
+    parser.add_argument("filepath", help="DOCX 파일 경로")
+    parser.add_argument("-o", "--output", help="결과 저장 경로 (.md 또는 .txt). 생략하면 stdout에 출력")
+    parser.add_argument("--lang", default="kor", help="Tesseract 언어 (기본: kor)")
+    args = parser.parse_args()
+
+    results = extract_ocr_from_docx(args.filepath, lang=args.lang, output_path=args.output)
+    if results and not args.output:
+        for idx, t in enumerate(results, start=1):
+            print(f"--- Image {idx} ---")
+            print(t)
+            print()
