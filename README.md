@@ -8,6 +8,7 @@
 - **안정적인 에러 처리**: 파일 읽기 오류가 발생해도 프로그램이 중단되지 않습니다.
 - **고급 OCR 추출**: 스캔된 PDF나 이미지 기반 PDF의 텍스트 인식을 위해 이미지 전처리 후 Tesseract OCR을 사용합니다.
 - **DOCX 내장 이미지 OCR**: DOCX 본문 텍스트뿐 아니라 문서에 삽입된 이미지에 대해서도 OCR을 수행하여 함께 반환합니다.
+- **PDF 임베드 이미지 추출**: PDF에 포함된 이미지를 페이지별 낱장 파일로 분리해 저장합니다(원본 포맷 보존, 동일 이미지 중복 제거).
 - **마크다운/텍스트 파일 저장**: 추출 함수의 `output_path` 인자로 결과를 `.md`(기계적 구조화) 또는 `.txt`로 바로 저장할 수 있습니다.
 
 ## 프로젝트 구성
@@ -17,6 +18,7 @@
 | `extract_text_from_file.py` | 진입점. 파일 확장자에 따라 적절한 추출 함수를 자동으로 선택합니다. DOCX 추출 시 내장 이미지의 OCR 결과를 본문 뒤에 함께 반환합니다. |
 | `extract_ocr_from_pdf.py` | 이미지 기반(스캔) PDF의 페이지를 이미지로 변환한 뒤 페이지별 OCR 텍스트 리스트를 반환합니다. |
 | `extract_ocr_from_docx.py` | DOCX 파일 내부(`word/media/`)에 포함된 이미지들을 추출해 이미지별 OCR 텍스트 리스트를 반환합니다. |
+| `extract_img_from_pdf.py` | PDF에 임베드된 이미지(PyMuPDF의 `xref` 기준)를 페이지별 낱장 파일로 추출해 지정한 폴더에 저장합니다. |
 | `ocr_core.py` | 공통 OCR 유틸리티. PIL 이미지에 그레이스케일 변환 및 이진화 전처리를 적용한 후 Tesseract로 텍스트를 추출합니다. |
 
 ## 설치 방법
@@ -106,7 +108,21 @@ for i, text in enumerate(image_texts, start=1):
     print(text)
 ```
 
-### 4. 단일 이미지 OCR (저수준 유틸리티)
+### 4. PDF 임베드 이미지 추출 (낱장 파일 저장)
+
+PDF 내부에 임베드된 이미지(스크린샷·도식·사진 등)를 페이지별 낱장 파일로 분리해 저장합니다. OCR이 아닌 **원본 이미지 자체**를 꺼내는 기능이며, PyMuPDF(`fitz`)만 있으면 동작합니다(Tesseract/Poppler 불필요).
+
+```python
+from extract_img_from_pdf import extract_images_from_pdf
+
+# PDF 파일 경로와 저장 폴더 (폴더가 없으면 자동 생성)
+saved = extract_images_from_pdf('xray_training.pdf', output_dir='extracted_images')
+print(f"{saved}개 이미지 저장됨")
+```
+
+저장 파일명은 `page_{페이지번호:03d}_img_{이미지순번:02d}.{원본확장자}` 형식이며, 확장자는 PDF에 박혀 있는 원본 포맷을 그대로 사용합니다(`png`, `jpeg`, `jb2`, `jpx`, `tiff`, `bmp`). 알 수 없는 포맷은 안전을 위해 `.bin`으로 떨어집니다. 동일한 이미지가 여러 페이지에서 참조될 경우 기본적으로 중복 저장을 막습니다(`dedupe=False`로 끌 수 있음).
+
+### 5. 단일 이미지 OCR (저수준 유틸리티)
 
 PIL `Image` 객체 한 장에 대해 직접 OCR을 수행하고 싶다면 `ocr_core.ocr_image`를 사용합니다. 내부적으로 그레이스케일 변환과 이진화(기본 임계값 200)를 거쳐 인식률을 높입니다.
 
@@ -158,6 +174,12 @@ python extract_ocr_from_docx.py abc.docx -o def.md --lang kor
 
 # 스캔 PDF의 1~10페이지 OCR → 마크다운 저장
 python extract_ocr_from_pdf.py scan.pdf -o scan.md --start 1 --end 10 --dpi 300 --lang kor
+
+# PDF 임베드 이미지 → 지정 폴더에 낱장 저장 (폴더 자동 생성, 중복 제거)
+python extract_img_from_pdf.py xray_training.pdf -o ./data_cleaned/pdf_img
+
+# 중복 제거 끄기 (같은 이미지가 여러 페이지에 있으면 페이지마다 저장)
+python extract_img_from_pdf.py xray_training.pdf -o ./data_cleaned/pdf_img --no-dedupe
 ```
 
 각 스크립트의 전체 옵션은 `-h` / `--help`로 확인할 수 있습니다.

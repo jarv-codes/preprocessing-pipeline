@@ -1,6 +1,7 @@
 python-docx
 python-pptx
 PyPDF2
+PyMuPDF
 pytesseract
 pdf2image
 Pillow
